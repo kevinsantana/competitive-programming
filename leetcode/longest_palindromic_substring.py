@@ -20,6 +20,8 @@ class Solution:
 
 
 # n^2
+# not my solution
+# https://www.youtube.com/watch?v=XYQecbcd6_c
 class Solution:
     def longestPalindrome(self, s: str) -> str:
         ans = ""

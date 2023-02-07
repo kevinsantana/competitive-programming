@@ -12,4 +12,4 @@ def divisors(n):
         yield int(divisor)
         
         
-print(list(divisors(799)))
+print(list(divisors(4)))
