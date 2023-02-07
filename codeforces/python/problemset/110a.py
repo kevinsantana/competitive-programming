@@ -17,6 +17,6 @@ def solve():
     n = input()
     print("YES") if is_digits_lucky(n) else print("NO")
 
-    
+
 if __name__ == "__main__":
     solve()

@@ -14,9 +14,17 @@ def solve(m):
 
 def solve_numpy(m):
     new_m = copy.deepcopy(m)
-    return np.rot90(new_m, k=1, axes=(1,0)).tolist()
+    return np.rot90(new_m, k=1, axes=(1, 0)).tolist()
 
 
 if __name__ == "__main__":
-    m = [[1, 2, 3], [4,5,6,], [7,8,9]]
+    m = [
+        [1, 2, 3],
+        [
+            4,
+            5,
+            6,
+        ],
+        [7, 8, 9],
+    ]
     print(solve(m) == solve_numpy(m))

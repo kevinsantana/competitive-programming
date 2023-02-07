@@ -1,7 +1,7 @@
 def my_reverse(word: str) -> str:
     drow = ""
     for i in range(len(word), 0, -1):
-        drow += word[i-1]
+        drow += word[i - 1]
     return drow
 
 

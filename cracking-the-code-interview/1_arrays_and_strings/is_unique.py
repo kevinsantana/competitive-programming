@@ -10,10 +10,10 @@ def solve(s: str):
         return True
     else:
         return False
-    
-    
+
+
 def solve_no_ds(s: str):
-    for i in range(len(s)-1):
+    for i in range(len(s) - 1):
         for j in range(len(s[i:])):
             if s[i] == s[j]:
                 return False
@@ -23,5 +23,5 @@ def solve_no_ds(s: str):
 if __name__ == "__main__":
     s = "fuiogweouifgwehfkowghnjkowernjgiopwerngiowbguioweuiweghfujiwehfjiowe"
     ans = solve(s)
-    ans1 = solve_no_ds(s) 
+    ans1 = solve_no_ds(s)
     assert ans == ans1

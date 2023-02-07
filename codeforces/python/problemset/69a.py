@@ -6,7 +6,7 @@ def solve():
         y += tmp[1]
         z += tmp[2]
     print("YES") if not any([x, y, z]) else print("NO")
-    
-    
+
+
 if __name__ == "__main__":
     solve()

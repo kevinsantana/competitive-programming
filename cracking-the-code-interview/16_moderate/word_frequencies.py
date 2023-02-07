@@ -13,7 +13,7 @@ def solve(s: str):
     new_s = re.sub(regex_str, "", s).lower()
     for word in new_s.split():
         freq[word] += 1
-    
+
     return freq
 
 

@@ -11,7 +11,7 @@ def solve(m):
         else:
             for c in m[i]:
                 if c == 0:
-                    m[i][0 : len(m[i])] = [x[0]*0 for x in m]
+                    m[i][0 : len(m[i])] = [x[0] * 0 for x in m]
     return m
 
 

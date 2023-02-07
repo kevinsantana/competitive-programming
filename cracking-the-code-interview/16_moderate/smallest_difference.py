@@ -17,7 +17,7 @@ def solve_brute_force(a, b):
         for j in range(len(b)):
             if abs(a[i] - b[j]) < min:
                 min = abs(a[i] - b[j])
-                
+
     return min
 
 
@@ -29,12 +29,12 @@ def solve(a, b):
     while i < len(a) and j < len(b):
         if abs(a[i] - b[j]) < diff:
             diff = abs(a[i] - b[j])
-            
+
         if a[i] < b[j]:
             i += 1
         else:
             j += 1
-    
+
     return diff
 
 

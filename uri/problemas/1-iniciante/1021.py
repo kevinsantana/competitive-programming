@@ -1,6 +1,6 @@
 def solve():
     n = float(input())
-    cem = n//100
+    cem = n // 100
     cinquenta = n % 100
     vinte = cinquenta % 50
     dez = vinte % 20
@@ -8,13 +8,13 @@ def solve():
     dois = cinco % 5
     cedulas = {
         100: cem * 100,
-        50: (cinquenta//50)*50,
-        10: (vinte//20)*20,
-        5: (cinco//5)*5,
-        2: (dois//2)*2
+        50: (cinquenta // 50) * 50,
+        10: (vinte // 20) * 20,
+        5: (cinco // 5) * 5,
+        2: (dois // 2) * 2,
     }
     troco = n - sum(cedulas.values())
-    um_real = troco//1.00
+    um_real = troco // 1.00
     cinquenta_centavos = troco % 1.00
     vinte_e_cinco_centavos = cinquenta_centavos % 0.50
     dez_centavos = vinte_e_cinco_centavos % 0.25
@@ -35,9 +35,9 @@ def solve():
         f"{int(dez_centavos//0.10)} moeda(s) de R$ 0.10",
         f"{int(cinco_centavos//0.05)} moeda(s) de R$ 0.05",
         f"{int(um_centavo//0.01)} moeda(s) de R$ 0.01",
-        sep="\n"
+        sep="\n",
     )
 
-    
+
 if __name__ == "__main__":
     solve()
