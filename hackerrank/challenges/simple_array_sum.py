@@ -19,8 +19,7 @@ import sys
 
 
 def simpleArraySum(ar):
-    # Write your code here
-    pass
+    return sum(ar)
 
 
 if __name__ == "__main__":
