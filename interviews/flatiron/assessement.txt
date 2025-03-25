@@ -1,0 +1,7 @@
+Q1: Find customers over 50 years old who have spent more than $5000 in valid orders.
+ 
+Q2. What's the ratio between the number of customers having 50y+ and the customers not having 50y+?
+
+Window Function: 
+    RANK, DENSE_RANK e ROW_NUMBER
+    LEAD e LAG
