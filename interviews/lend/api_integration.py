@@ -1,7 +1,7 @@
 import argparse
 import os
 from datetime import datetime
-from typing import Dict, List, Union, Tuple
+from typing import Dict, Optional, Tuple, Union
 
 import requests
 from dotenv import load_dotenv
@@ -15,12 +15,13 @@ class Config(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
+    env: str = "dev"
     api_key: str = ""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if os.getenv("ENV") not in DEV_ENVS:
-            load_dotenv(dotenv_path=None, override=True)
+        if os.getenv("ENV") in DEV_ENVS:
+            load_dotenv(".env")
 
 
 config = Config()
@@ -28,105 +29,103 @@ config = Config()
 
 def main(n_days: int, city_code: str):
     try:
-        logger.info("Starting to fetch data form API")
-        forecasts = {"forecast": []}
-        url_forecast = URL.format(
-            n_days=n_days, city_code=city_code, api_key=config.api_key
+        url = URL.format(n_days=n_days, city_code=city_code, api_key=config.api_key)
+        logger.info(
+            f"Fetching data from weather API. Days {n_days}, City {city_code}"
+            f" on URL {url}"
         )
-        forecast = requests.get(url=url_forecast)
+        forecast = requests.get(url)
         if forecast.status_code != 200:
             logger.exception(
-                "Error requesting external API."
-                f"Status code {forecast.status_code}. Response {forecast.text}"
+                "Error to fetch data from API. Status code: "
+                f"{forecast.status_code}. Response {forecast.text}"
             )
-        forecast_data = forecast.json()
+            raise Exception(
+                "Error to fetch data from API. Status code: "
+                f"{forecast.status_code}. Response {forecast.text}"
+            )
 
-        for day in forecast_data["DailyForecasts"]:
-            logger.info(f"Processing day {day.get('Date')}")
-            day_formatted = _convert_datetime_string(day.get("Date"))
-            temp_max = day["Temperature"]["Maximum"]["Value"]
-            temp_max_cloth = _max_temperature_rule(temp_max)
-            highest_weather_day = _get_highest_prob_weather(day)
-            weather_prob_cloth = _apply_rule(weather=highest_weather_day)
-            
-            clothes_list = []
-            if isinstance(temp_max_cloth, tuple):
-                clothes_list.extend(list(temp_max_cloth))
+        forecast = forecast.json()
+        forecasting = {"forecasts": []}
+        for day in forecast["DailyForecasts"]:
+            logger.info(f"Fetching day {day['Date']}")
+            day_formatted = _format_date(day["Date"])
+            day_max_temp = day["Temperature"]["Maximum"]["Value"]
+            max_temp_cloth = _max_temp_cloth(day_max_temp)
+            highest_prob_weather = _get_highest_prob_weather(day=day)
+            cloth_from_day_weather = _cloth_from_weather(*highest_prob_weather)
+            cloths = []
+
+            if isinstance(max_temp_cloth, tuple):
+                cloths.extend(max_temp_cloth)
             else:
-                clothes_list.append(temp_max_cloth)
-            
-            if weather_prob_cloth:
-                clothes_list.append(weather_prob_cloth)
+                cloths.append(max_temp_cloth)
 
-            forecasts["forecast"].append(
-                {"date": day_formatted, "clothes": clothes_list}
-            )
+            if cloth_from_day_weather:
+                cloths.append(cloth_from_day_weather)
 
-        logger.success("Finished fetching data from API.")
-        return forecasts
+            forecasting["forecasts"].append({"date": day_formatted, "cloths": cloths})
+
+        logger.success("Finished fetching data from weather API.")
+        return forecasting
 
     except Exception as e:
-        logger.exception(f"An unexpected error occured: {str(e)}")
-        raise Exception(f"An unexpected error occured: {str(e)}")
+        logger.exception(f"An unexpected exception occurred: {str(e)}")
+        raise Exception(f"An unexpected exception occurred: {str(e)}")
 
 
 def get_arg_parser():
-    parser = argparse.ArgumentParser(
-        description=("Fetch wether data from AcuWeather API")
-    )
+    parser = argparse.ArgumentParser()
     parser.add_argument(
         "-n",
         "--n-days",
-        dest="n_days",
         default=5,
         type=int,
-        help="Number of days to fetch from API",
+        dest="n_days",
+        help="Number of days to fetch from wether API. Defaults to 5.",
     )
     parser.add_argument(
         "-c",
-        "--city-code",
-        choices=["60449", "45881", "349727", "101924", "127164"],
+        "--city",
         dest="city_code",
         default="45881",
-        help="City code, from where the weather should be forescasted.",
+        type=str,
+        choices=["60449", "45881", "349727", "101924", "127164"],
+        help="Code maps to a city in API. Choices are"
+        "60449 (Santiago), 45881 (São Paulo), 349727 (New York), 101924 (Beijing), 127164 (Cairo)",
     )
+
     return parser
 
 
-def _max_temperature_rule(max_temp: int) -> Union[str, Tuple[str, str]]:
+def _format_date(datetime_str: str) -> str:
     try:
-        if max_temp < 45:  # Coat", "Winter jacket"
-            return "Coat", "Winter jacket"
+        datetime_obj = datetime.fromisoformat(datetime_str)
+        formatted_date_str = datetime_obj.strftime(DATE_FORMAT)
+        return formatted_date_str
 
-        if max_temp >= 45 and max_temp <= 79:  # Fleece", "Short Sleeves"
+    except Exception as e:
+        logger.exception(f"An unexpected error occured in _format_date: {str(e)}")
+        raise
+
+
+def _max_temp_cloth(temp: int) -> Optional[Union[str, Tuple[str, str]]]:
+    try:
+        if temp < 45:
+            return "Coat", "Winter Jacket"
+
+        if temp >= 45 and temp <= 79:
             return "Fleece", "Short Sleeves"
 
-        if max_temp > 80:
+        if temp > 80:
             return "Shorts"
 
     except Exception as e:
-        logger.exception(f"Exception on _max_temperature_rule: {str(e)}")
+        logger.exception(f"An unexpected error occured in _max_temp_cloth: {str(e)}")
         raise
 
 
-def _apply_rule(weather: str) -> Union[str, None]:
-    try:
-        if weather == "rain":
-            return "Rain Coat"
-
-        if weather == "snow":
-            return "Snow Outfit"
-
-        if weather == "ice":
-            return "Shell Jacket"
-        return None
-
-    except Exception as e:
-        logger.exception(f"Exception on _apply_rule: {str(e)}")
-        raise
-
-
-def _get_highest_prob_weather(day: Dict[str, str]) -> str:
+def _get_highest_prob_weather(day: Dict[str, str]) -> Tuple[int, str]:
     try:
         day_rain_prob = day["Day"]["RainProbability"]
         night_rain_prob = day["Night"]["RainProbability"]
@@ -134,27 +133,34 @@ def _get_highest_prob_weather(day: Dict[str, str]) -> str:
         night_snow_prob = day["Night"]["SnowProbability"]
         day_ice_prob = day["Day"]["IceProbability"]
         night_ice_prob = day["Night"]["IceProbability"]
-        prob_weather = [
+        probabilities = [
             (max(day_rain_prob, night_rain_prob), "rain"),
             (max(day_snow_prob, night_snow_prob), "snow"),
             (max(day_ice_prob, night_ice_prob), "ice"),
         ]
-        return max(prob_weather, key=lambda x: x[0])[1]
+        return max(probabilities, key=lambda x: x[0])
 
     except Exception as e:
-        logger.exception(f"Exception on _get_highest_prob_weather: {str(e)}")
+        logger.exception(
+            f"An unexpected error occured in _get_highest_prob_weather: {str(e)}"
+        )
         raise
 
 
-def _convert_datetime_string(datetime_str: str) -> str:
-    try:
-        datetime_obj = datetime.fromisoformat(datetime_str)
-        formatted_date_str = datetime_obj.strftime(DATE_FORMAT)
-        return formatted_date_str
+def _cloth_from_weather(prob: int, weather: str):
+    if weather == "rain":
+        if prob > 50:
+            return "Rain coat"
 
-    except ValueError:
-        logger.exception("Exception to convert datetime string.")
-        raise ValueError(f"Error: Invalid datetime string format: {datetime_str}")
+    if weather == "snow":
+        if prob > 50:
+            return "Snow Outfit"
+
+    if weather == "ice":
+        if prob > 50:
+            return "Shell jacket"
+
+    return None
 
 
 if __name__ == "__main__":
