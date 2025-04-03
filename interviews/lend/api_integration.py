@@ -16,11 +16,11 @@ class Config(BaseSettings):
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
     api_key: str = ""
-    env: str = "dev"
+    env: str = ""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if os.getenv("ENV", "dev") in DEV_ENVS:
+        if os.getenv("ENV", "dev") not in DEV_ENVS:
             load_dotenv(dotenv_path=None, override=True)
 
 
